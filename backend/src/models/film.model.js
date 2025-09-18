@@ -1,7 +1,9 @@
+// models/film.model.js
 import { DataTypes } from 'sequelize';
-import db from './index.js';
+import sequelize from '../config/database.js';
 
-const Film = db.sequelize.define('Film', {
+
+const Film = sequelize.define('Film', {
   titre: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -10,13 +12,13 @@ const Film = db.sequelize.define('Film', {
     type: DataTypes.TEXT,
   },
   affiche: {
-    type: DataTypes.STRING, // chemin ou URL de l'affiche
+    type: DataTypes.STRING, 
   },
   age_min: {
     type: DataTypes.INTEGER,
   },
   duree: {
-    type: DataTypes.INTEGER, // durée en minutes
+    type: DataTypes.INTEGER, 
     allowNull: false,
   },
   date_ajout: {
@@ -37,11 +39,12 @@ const Film = db.sequelize.define('Film', {
   },
   genre_id: {
     type: DataTypes.INTEGER,
-    allowNull: false, 
+    allowNull: true, 
   },
 }, {
   tableName: 'film',
   timestamps: false, 
 });
+
 
 export default Film;
