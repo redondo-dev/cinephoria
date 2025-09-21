@@ -5,7 +5,7 @@ import Seance from './seance.model.js';
 import Salle from './salle.model.js';
 import Cinema from './cinema.model.js';
 import Genre from './genre.model.js';
-import Reservation from "./reservation.model.js";
+
 
 
 

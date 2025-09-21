@@ -1,4 +1,5 @@
 import Film from '../models/film.model.js';
+import request from "supertest";
 
 // POST /api/films - Crée un nouveau film dans la base de données.
 
@@ -65,15 +66,24 @@ export const updateFilm = async (req, res) => {
 export const deleteFilm = async (req, res) => {
   try {
     const { id } = req.params;
+    // Convertir en entier
+    const filmId = Number.parseInt(id, 10);
+
+    // Vérifier que l'ID est bien un entier positif
+    if (Number.isNaN(filmId)) {
+      return res.status(400).json({ message: "ID invalide" });
+    }
+
     const film = await Film.findByPk(id);
-    if (!film) return res.status(404).json({ message: 'Film non trouvé.' });
+    if (!film) return res.status(404).json({ message: 'Film non trouvé' });
     
     await Film.destroy({ where: { id } });
 
-    res.json({ message: 'Film supprimé avec succès.' });
+    res.json({ message: 'Film supprimé avec succès' });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Erreur lors de la suppression du film.' });
+    res.status(500).json({ message: 'Erreur lors de la suppression du film' });
   }
 };
+
 
