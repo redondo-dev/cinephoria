@@ -1,35 +1,37 @@
+
+// src/controllers/reservation.controller.js
 import Reservation from "../models/reservation.model.js";
 
-// Créer une réservation
 export const createReservation = async (req, res) => {
   try {
-    const { utilisateur_id, seance_id, nb_places, prix_unitaire, date_expiration } = req.body;
+    // On prend utilisateur_id du body (si fourni) sinon null
+    const { utilisateur_id = null, seance_id, nb_places, prix_unitaire, date_expiration } = req.body;
 
-// Vérification des champs obligatoires
-    if ( !seance_id || !nb_places || !prix_unitaire) {
-      return res.status(400).json({ message: "Champs obligatoires manquants" });
+    // Vérification des champs obligatoires
+    if (!seance_id || !nb_places || !prix_unitaire) {
+      return res.status(400).json({
+        message: "Champs obligatoires manquants : seance_id, nb_places, prix_unitaire",
+      });
     }
 
-     // Création de la réservation
+    // Création de la réservation
     const reservation = await Reservation.create({
-      utilisateur_id : utilisateur_id || null,
+      utilisateur_id,   // null pour visiteur
       seance_id,
-      nb_places:parseInt(nb_places),
-      prix_unitaire:parseFloat(prix_unitaire),
-      statut_reservation: "en_attente",
+      nb_places,
+      prix_unitaire,
       date_expiration: date_expiration || null,
     });
 
-// Retour avec prix_total calculé automatiquement
-    res.status(201).json(reservation);
+    return res.status(201).json(reservation);
   } catch (error) {
     console.error("Erreur lors de la création :", error);
-  console.error("Erreur lors de la création :", error);
-  res.status(500).json({ message: "Erreur serveur", error: error.message });
-
+    return res.status(500).json({
+      message: "Erreur serveur",
+      error: error.message,
+    });
   }
 };
-
 
 // Récupérer toutes les réservations
 export const getAllReservations = async (req, res) => {

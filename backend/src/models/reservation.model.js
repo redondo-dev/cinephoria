@@ -28,7 +28,7 @@ const Reservation = sequelize.define(
       allowNull: false,
       defaultValue: 0,
     },
-    // prix_total est généré en base, on le définit comme "readOnly"
+    // prix_total est généré en base de données
     prix_total: {
       type: DataTypes.VIRTUAL(DataTypes.NUMERIC, ['nb_places', 'prix_unitaire']),
       get() {
