@@ -1,4 +1,7 @@
 import express from 'express';
+import filmRoutes from './routes/film.routes.js';
+import reservationRoutes from './routes/reservation.route.js';
+import cors from 'cors';
 import cookieParser from "cookie-parser";
 import cors from 'cors';
 import dotenv from "dotenv";
@@ -7,14 +10,18 @@ import authRoutes from './routes/auth.routes.js';
 dotenv.config();
 
 const app = express();
-
+app.use(cors());
 // Middleware pour parser le JSON
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(cors({
   origin: 'http://localhost:3000', 
   credentials: true, 
 }));
+
+app.use('/films', filmRoutes);
+app.use('/api/reservations', reservationRoutes);
 
 // Routes
 app.use("/api/auth", authRoutes);
