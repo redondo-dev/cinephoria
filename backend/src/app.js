@@ -1,9 +1,8 @@
 import express from 'express';
-import filmRoutes from './routes/film.routes.js';
+
 import reservationRoutes from './routes/reservation.route.js';
 import cors from 'cors';
 import cookieParser from "cookie-parser";
-import cors from 'cors';
 import dotenv from "dotenv";
 import authRoutes from './routes/auth.routes.js';
 
@@ -20,11 +19,11 @@ app.use(cors({
   credentials: true, 
 }));
 
-app.use('/films', filmRoutes);
+// Routes pour les réservations
 app.use('/api/reservations', reservationRoutes);
 
 // Routes
-app.use("/api/auth", authRoutes);
+
 app.get("/", (req, res) => res.send("Bienvenue sur Cinephoria API"));
 
 
