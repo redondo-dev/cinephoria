@@ -41,7 +41,17 @@ export const seedReferenceData = async () => {
   await FilmGenre.findOrCreate({
     where: { film_id: film.id, genre_id: genre.id }
   })
-
+ // Séance ID 1 (utilisée par les tests API)
+  await Seance.findOrCreate({
+    where: { id: 1 },
+    defaults: {
+      id: 1,
+      filmId: film.id,
+      salleId: salle.id,
+      dateHeureDebut: new Date(Date.now() + 3600000),
+      dateHeureFin: new Date(Date.now() + 7200000)
+    }
+  })
   // Seance avec ID force a 15 (reference en dur dans les tests Cypress)
   const dateDebut = new Date()
   dateDebut.setDate(dateDebut.getDate() + 1)
