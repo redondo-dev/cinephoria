@@ -30,19 +30,32 @@ export const seedTestData = async () => {
  // === 2. SÉANCES DE TEST (AJOUT) ===
   console.log('  🌱 Ajout des séances de test...')
   
-  const seances = [
-    { id: 15, film_id: 1, salle_id: 1, date: new Date(Date.now() + 86400000), heure: '14:00:00', tarif_id: 1 },
-    { id: 3725, film_id: 1, salle_id: 1, date: new Date(Date.now() + 172800000), heure: '16:00:00', tarif_id: 1 }
-  ]
-
-  for (const seance of seances) {
-    await sequelize.query(
-      `INSERT INTO seance (id, film_id, salle_id, date, heure, tarif_id, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
-       ON CONFLICT (id) DO NOTHING`,
-      { replacements: [seance.id, seance.film_id, seance.salle_id, seance.date, seance.heure, seance.tarif_id] }
-    )
+ const seances = [
+  { 
+    id: 15, 
+    film_id: 1, 
+    salle_id: 1, 
+    date_heure_debut: new Date(Date.now() + 86400000),  // demain
+    date_heure_fin: new Date(Date.now() + 86400000 + 7200000),  // +2h
+  },
+  { 
+    id: 3725, 
+    film_id: 1, 
+    salle_id: 1, 
+    date_heure_debut: new Date(Date.now() + 172800000),  // dans 2 jours
+    date_heure_fin: new Date(Date.now() + 172800000 + 7200000),  // +2h
   }
+];
+
+for (const s of seances) {
+  await sequelize.query(
+    `INSERT INTO seance (id, film_id, salle_id, date_heure_debut, date_heure_fin)
+     VALUES ($1, $2, $3, $4, $5)
+     ON CONFLICT (id) DO NOTHING`,
+    { replacements: [s.id, s.film_id, s.salle_id, s.date_heure_debut, s.date_heure_fin] }
+  );
+}
+ 
   console.log('  ✅ Séances de test ajoutées (15, 3725)')
   console.log('✅ Données de test insérées')
 }
