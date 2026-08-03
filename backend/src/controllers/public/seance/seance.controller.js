@@ -82,7 +82,7 @@ export const getSeancesByFilm = async (req, res) => {
         }
       ],
       order: [
-        ['date_seance', 'ASC'],
+        
         ['dateHeureDebut', 'ASC']
       ]
     });
@@ -109,7 +109,7 @@ export const getSeancesByFilm = async (req, res) => {
       
       return {
         id: seance.id,
-        date: seance.date_seance,
+        date: seance.dateHeureDebut.toISOString().split('T')[0],
         heure_debut: seance.dateHeureDebut.toISOString().substring(11, 16),
         heure_fin: seance.dateHeureFin.toISOString().substring(11, 16),
         qualite: qualite,
@@ -141,17 +141,20 @@ export const getAllSeances = async (req, res) => {
     const { date, cinemaId, filmId } = req.query;
 
     const whereClause = {
-      date_seance: {
+      dateHeureDebut: {
         [Op.gte]: new Date()
       }
     };
 
     if (date) {
-      whereClause.date_seance = date;
+      whereClause.dateHeureDebut = {
+        [Op.gte]: new Date(`${date}T00:00:00`),
+        [Op.lt]: new Date(`${date}T23:59:59`)
+      };
     }
 
     if (filmId) {
-      whereClause.filmId = filmId;
+      whereClause.film_id = filmId;
     }
 
     const includeClause = [
@@ -183,7 +186,7 @@ export const getAllSeances = async (req, res) => {
       where: whereClause,
       include: includeClause,
       order: [
-        ['date_seance', 'ASC'],
+       
         ['dateHeureDebut', 'ASC']
       ]
     });
