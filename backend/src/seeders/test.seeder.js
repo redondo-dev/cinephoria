@@ -50,7 +50,7 @@ export const seedTestData = async () => {
 for (const s of seances) {
   await sequelize.query(
     `INSERT INTO seance (id, film_id, salle_id, date_heure_debut, date_heure_fin)
-     VALUES ($1, $2, $3, $4, $5)
+     VALUES (?,?,?,?,?)
      ON CONFLICT (id) DO NOTHING`,
     { replacements: [s.id, s.film_id, s.salle_id, s.date_heure_debut, s.date_heure_fin] }
   );
