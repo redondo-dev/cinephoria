@@ -1,6 +1,7 @@
 // src/seeders/test.seeder.js
 import bcrypt from 'bcrypt'
 import {User } from '../models/index.js'
+import sequelize from '../config/database.js' 
 
 export const seedTestData = async () => {
   console.log('🌱 Insertion des données de test...')
