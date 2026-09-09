@@ -1,5 +1,5 @@
 import './config/env.js'; // Charger les variables d'environnement en premier
-import 'dotenv/config';
+// import 'dotenv/config';
 
 import app from './app.js';
 import { sequelize, Film, Seance, Salle, Cinema } from './models/index.js';
@@ -12,8 +12,8 @@ const startServer = async () => {
     await sequelize.authenticate();
     console.log(' Connexion à la base de données réussie');
 
-    await sequelize.sync();
-    console.log('Modèles synchronisés avec la base');
+   // Synchroniser les modèles avec la base de données
+    console.log('Modèles chargés');
 
     // MongoDB sert uniquement aux donnees analytiques (films/reservations
     // des 7 derniers jours) : ce n'est pas une dependance critique pour

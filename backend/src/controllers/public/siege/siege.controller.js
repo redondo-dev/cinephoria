@@ -1,5 +1,5 @@
-
-import { Seance, Salle, Siege, Reservation } from "../../../models/index.js";
+import { Op } from "sequelize";
+import { Seance, Salle, Siege, Billet,Reservation} from "../../../models/index.js";
 
 // 🔹 Récupérer les sièges disponibles d'une séance
 export const getSiegesDisponibles = async (req, res) => {
@@ -18,31 +18,32 @@ export const getSiegesDisponibles = async (req, res) => {
     if (!seance) {
       return res.status(404).json({ message: 'Séance non trouvée' });
     }
-   const salleId = seance.salle?.id || seance.dataValues?.salleId;
+
+if (!seance.salle) {
+      return res.status(404).json({ message: 'Salle associée à la séance introuvable' });
+    }
+
+
+  
     // 2️-Récupérer tous les sièges de la salle
     const sieges = await Siege.findAll({
-      where: { salle_id: seance.salleId },
+      where: { salle_id: seance.salle.id },
       attributes: ['id', 'numero_siege', 'rangee', 'type_siege'],
       order: [['rangee', 'ASC'], ['numero_siege', 'ASC']]
     });
 
-    // 3️- Récupérer les réservations de la séance avec les sièges associés (N-N)
-    const reservations = await Reservation.findAll({
-      where: { seance_id: id },
-      include: {
-        model: Siege,
-        as: 'siegesReserves', // alias N-N
-        through: { attributes: [] }, 
-        attributes: ['id', 'numero_siege', 'rangee']
-      }
+// 3️- Sièges occupés = billets actifs (non annulés) sur cette séance.
+const billetsActifs = await Billet.findAll({
+      where: {
+        seance_id: id,
+        statut_billet: { [Op.ne]: 'annule' },
+      },
+      attributes: ['siege_id'],
     });
 
-    // 4️- Construire un set des IDs de sièges réservés
-    const siegesReservesIds = new Set(
-      reservations.flatMap(r => r.siegesReserves.map(s => s.id))
-    );
+const siegesReservesIds = new Set(billetsActifs.map(b => b.siege_id));
 
-    // 5️- Marquer chaque siège comme disponible ou non
+// 4️- Marquer chaque siège comme disponible ou non
     const siegesAvecDisponibilite = sieges.map(siege => ({
       id: siege.id,
       numero: siege.numero_siege,

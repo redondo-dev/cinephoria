@@ -13,7 +13,7 @@ import Avis from './avis.model.js';
 import Siege from './siege.model.js';
 import Tarif from './tarif.model.js';
 import Incident from './incident.model.js';
-
+import Billet from './billet.model.js';
 
 
 // Les Associations
@@ -89,12 +89,19 @@ User.hasMany(Avis, { foreignKey: 'validated_by', as: 'avisTraites' });
 
 
 /* ============================================================
-   RESERVATION <-> SIEGE (N-N)
+   BILLET
 ============================================================ */
+Billet.belongsTo(Reservation, { foreignKey: 'reservation_id', as: 'reservation', onDelete: 'CASCADE' });
+Reservation.hasMany(Billet, { foreignKey: 'reservation_id', as: 'billets' });
 
-// Association N-N via table intermédiaire reservation_siege
-Reservation.belongsToMany(Siege, { through: 'reservation_siege', as: 'siegesReserves', foreignKey: 'reservation_id' });
-Siege.belongsToMany(Reservation, { through: 'reservation_siege', as: 'reservationsSieges', foreignKey: 'siege_id' });
+Billet.belongsTo(Siege, { foreignKey: 'siege_id', as: 'siege' });
+Siege.hasMany(Billet, { foreignKey: 'siege_id', as: 'billets' });
+
+Billet.belongsTo(Seance, { foreignKey: 'seance_id', as: 'seance' });
+Seance.hasMany(Billet, { foreignKey: 'seance_id', as: 'billets' });
+
+Billet.belongsTo(Tarif, { foreignKey: 'tarif_id', as: 'tarif' });
+Tarif.hasMany(Billet, { foreignKey: 'tarif_id', as: 'billets' });
 
 /* ============================================================
    INCIDENT <-> SALLE
@@ -113,4 +120,4 @@ User.hasMany(Incident, { foreignKey: 'utilisateur_id', as: 'incidents' });
 
 
 
-export { sequelize, Film, Seance, Salle, Cinema, Genre, FilmGenre, User, Role, Reservation, Avis, Siege, Tarif, Incident };
+export { sequelize, Film, Seance, Salle, Cinema, Genre, FilmGenre, User, Role, Reservation, Avis, Siege, Tarif, Incident, Billet };

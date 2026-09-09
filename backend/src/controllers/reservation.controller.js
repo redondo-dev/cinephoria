@@ -1,10 +1,11 @@
 // src/controllers/reservation.controller.js
-import { Reservation, Seance, Film, Salle, Cinema, Siege ,User} from "../models/index.js";
+import { Reservation, Seance, Film, Salle, Cinema, Siege ,User,Billet, Tarif } from "../models/index.js";
 import { sendTicketEmail } from '../utils/sendEmailConfirmation.js';
+
 
 export const createReservation = async (req, res) => {
   try {
-    const { utilisateur_id = null, seance_id, nb_places, prix_unitaire, date_expiration,sieges ,statut_reservation} = req.body;
+    const { utilisateur_id = null, seance_id, nb_places, prix_unitaire, date_expiration,sieges ,statut_reservation,tarif_id} = req.body;
 
     if (!seance_id || !nb_places || !prix_unitaire) {
       return res.status(400).json({
@@ -20,17 +21,63 @@ export const createReservation = async (req, res) => {
 if (nb_places <= 0) {
   return res.status(400).json({ message: "Le nombre de places doit être positif" })
 }
+
+if (!sieges || sieges.length === 0) {
+      return res.status(400).json({ message: "Au moins un siège doit être sélectionné" });
+    }
+ 
+    if (sieges.length !== nb_places) {
+      return res.status(400).json({
+        message: `nb_places (${nb_places}) ne correspond pas au nombre de sièges fournis (${sieges.length})`,
+      });
+    }
+// Séance nécessaire pour la date d'expiration du QR (valide jusqu'à la fin de la séance)
+    const seance = await Seance.findByPk(seance_id, { attributes: ['id', 'date_heure_fin'] });
+    if (!seance) {
+      return res.status(404).json({ message: "Séance non trouvée" });
+    }
+ 
+   
+    let resolvedTarifId = tarif_id;
+    if (!resolvedTarifId) {
+      const tarifParDefaut = await Tarif.findOne({ order: [['id', 'ASC']] });
+      if (!tarifParDefaut) {
+        return res.status(500).json({ message: "Aucun tarif configuré en base — impossible de créer les billets" });
+      }
+      resolvedTarifId = tarifParDefaut.id;
+    }
+ 
+    const statutFinal = statut_reservation || 'en_attente';
     const reservation = await Reservation.create({
       utilisateur_id,
       seance_id,
       nb_places,
       prix_unitaire,
       date_expiration: date_expiration || null,
-      statut_reservation: statut_reservation || 'en_attente', 
+      statut_reservation:statutFinal, 
     });
-  if (sieges && sieges.length > 0) {
-      await reservation.addSiegesReserves(sieges); // méthode générée par belongsToMany
+
+ try {
+      await Billet.bulkCreate(
+        sieges.map((siege_id) => ({
+          reservation_id: reservation.id,
+          siege_id,
+          seance_id,
+          tarif_id: resolvedTarifId,
+          statut_billet: statutFinal === 'confirmee' ? 'valide' : 'en_attente',
+          prix_final: prix_unitaire,
+          date_expiration_qr: seance.date_heure_fin,
+        }))
+      );
+      } catch (billetError) {
+    
+      await reservation.destroy();
+      if (billetError.name === 'SequelizeUniqueConstraintError') {
+        return res.status(409).json({ message: "Un ou plusieurs sièges viennent d'être réservés par quelqu'un d'autre" });
+      }
+      throw billetError;
     }
+ 
     return res.status(201).json(reservation);
   } catch (error) {
     console.error("Erreur lors de la création :", error);
@@ -76,13 +123,21 @@ export const getReservationById = async (req, res) => {
           ],
         },
         {
-          model: Siege,
-          as: "siegesReserves",          // ✅ alias exact défini dans models/index.js
-          attributes: ["rangee", "numero_siege"],
-          through: { attributes: [] },   // masque les colonnes de la table pivot
+        
+          model: Billet,
+          as: "billets",
+          attributes: ["id", "statut_billet", "qr_code", "prix_final", "siege_id"],
+          include: [
+            {
+              model: Siege,
+              as: "siege",
+              attributes: ["rangee", "numero_siege"],
+            },
+          ],
         },
       ],
     });
+       
 
     if (!reservation) {
       return res.status(404).json({ message: "Réservation non trouvée" });
@@ -142,10 +197,18 @@ export const sendTicketByEmail = async (req, res) => {
             },
           ],
         },
+
         {
-          model: Siege, as: 'siegesReserves',
-          attributes: ['rangee', 'numero_siege'],
-          through: { attributes: [] },
+          model: Billet,
+          as: 'billets',
+          attributes: ['id', 'statut_billet', 'siege_id'],
+          include: [
+            {
+              model: Siege,
+              as: 'siege',
+              attributes: ['rangee', 'numero_siege'],
+        },
+          ],
         },
       ],
     });
@@ -166,8 +229,8 @@ export const sendTicketByEmail = async (req, res) => {
 
     res.json({ message: 'Email envoyé avec succès' });
   } catch (err) {
-     console.error("❌ Erreur DÉTAILLÉE envoi email billet :", err); // ← remplacer par ça
-    throw new Error("Impossible d'envoyer l'email de billet");
-    res.status(500).json({ message: "Erreur lors de l'envoi de l'email", error: error.message });
+     console.error("❌ Erreur DÉTAILLÉE envoi email billet :", err); 
+    
+    res.status(500).json({ message: "Erreur lors de l'envoi de l'email", error: err.message });
   }
 };

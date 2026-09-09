@@ -1,5 +1,6 @@
 // src/controllers/payment.controller.js
 import Stripe from 'stripe';
+import { Reservation,Billet } from '../models/index.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -80,7 +81,36 @@ export const handleWebhook = async (req, res) => {
           { statut_reservation: 'annulee' },
           { where: { id: reservation_id } }
         );
-        console.log(`❌ Réservation #${reservation_id} annulée`);
+       
+    const [nbBilletsMisAJour] = await Billet.update(
+          { statut_billet: 'valide' },
+          { where: { reservation_id, statut_billet: 'en_attente' } }
+        );
+        console.log(`✅ Réservation #${reservation_id} confirmée — ${nbBilletsMisAJour} billet(s) validé(s)`);
+      } else {
+        console.warn('⚠️ Webhook reçu sans reservation_id dans metadata');
+      }
+      break;
+    }
+ 
+    case 'payment_intent.payment_failed': {
+      const paymentIntent = event.data.object;
+      const reservation_id = paymentIntent.metadata?.reservation_id;
+ 
+      if (reservation_id) {
+        await Reservation.update(
+          { statut_reservation: 'annulee' },
+          { where: { id: reservation_id } }
+        );
+        // Billets annulés -> l'index unique partiel les exclut,
+        // les sièges redeviennent immédiatement réservables par quelqu'un d'autre.
+        const [nbBilletsAnnules] = await Billet.update(
+          { statut_billet: 'annule' },
+          { where: { reservation_id, statut_billet: 'en_attente' } }
+        );
+        console.log(`❌ Réservation #${reservation_id} annulée — ${nbBilletsAnnules} billet(s) annulé(s)`);
+      } else {
+        console.warn('⚠️ Webhook payment_failed reçu sans reservation_id dans metadata');
       }
       break;
     }
