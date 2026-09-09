@@ -6,7 +6,7 @@ const currentEnv = process.env.NODE_ENV || 'development';
 
 // Détermine le fichier à charger si nécessaire
 const envFile =
-  currentEnv === 'production' ? '.env.production' : '.env';
+  currentEnv === 'production' ? '.env.production' : `.env.${currentEnv}`;
 
 // Vérifie si les variables Render  existent déjà
 if (!process.env.DB_HOST) {

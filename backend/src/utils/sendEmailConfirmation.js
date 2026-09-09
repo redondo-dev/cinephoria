@@ -41,10 +41,10 @@ export const sendConfirmationEmail = async (email, token) => {
 export const sendTicketEmail = async ({ to, reservation }) => {
   try {
     const transporter = createTransporter();
-    const { id, nb_places, prix_unitaire, seance, siegesReserves } = reservation;
+    const { id, nb_places, prix_unitaire, seance, billets } = reservation;
 
     const total = (nb_places * prix_unitaire).toFixed(2);
-    const sieges = siegesReserves?.map(s => `${s.rangee}${s.numero_siege}`).join(', ') || 'N/A';
+    const sieges = billets?.map(b => `${b.siege.rangee}${b.siege.numero_siege}`).join(', ') || 'N/A';
     const dateSeance = seance?.dateHeureDebut
       ? new Date(seance.dateHeureDebut).toLocaleString('fr-FR')
       : 'N/A';

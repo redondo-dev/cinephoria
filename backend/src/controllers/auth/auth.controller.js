@@ -16,7 +16,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "supersecret";
 export const login = async (req, res) => {
   const { email, password } = req.body;
 
- console.log('🔐 [BACKEND] Login attempt:', email);
+ 
 
   if (!email || !password) {
     
@@ -28,21 +28,17 @@ export const login = async (req, res) => {
       where: { email },
       include: [{ model: Role, as: "roleDetails" }],
     });
-console.log("[DEBUG] email reçu:", req.body.email);
-console.log("[DEBUG] password reçu:", req.body.password);
-console.log("[LOGIN DEBUG] user trouvé:", user);
+
 
     if (!user) {
        console.log(' [BACKEND] Aucun utilisateur trouvé pour:', email);
       return res.status(401).json({ message: "Utilisateur non trouvé" });
     }
-  console.log('[BACKEND] Utilisateur trouvé:', user.email);
-    console.log(' [BACKEND] Role:', user.roleDetails?.nom_role);
-    console.log('[BACKEND] Prénom/Nom:', user.prenom, user.nom);
+
     
     // Vérification du mot de passe
     const passwordMatch = await bcrypt.compare(password, user.password);
-    console.log("[LOGIN DEBUG] passwordMatch:", passwordMatch); 
+  
 
     if (!passwordMatch) {
       return res.status(401).json({ message: "Identifiants invalides" });
