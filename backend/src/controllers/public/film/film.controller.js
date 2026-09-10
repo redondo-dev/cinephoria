@@ -12,18 +12,54 @@ export const getAllFilmsPublic = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
     const offset = (page - 1) * limit;
-    const { genre, search, coup_coeur } = req.query;
+    const { genre, search, coup_coeur, cinema  } = req.query;
 
     const where = {};
     if (coup_coeur) where.coup_coeur = true;
     if (search) where.titre = { [Op.iLike]: `%${search}%` };
+if (cinema) {
+      const seancesDansCeCinema = await Seance.findAll({
+        attributes: ['film_id'],
+        include: [
+          {
+            model: Salle,
+            as: 'salle',
+            attributes: [],
+            required: true,
+            include: [
+              {
+                model: Cinema,
+                as: 'cinema',
+                attributes: [],
+                required: true,
+                where: { id: cinema },
+              },
+            ],
+          },
+        ],
+        group: ['Seance.film_id'],
+      });
+
+      const filmIds = seancesDansCeCinema.map((s) => s.film_id);
+
+      if (filmIds.length === 0) {
+        return res.status(200).json({
+          films: [],
+          total: 0,
+          page,
+          totalPages: 0,
+        });
+      }
+
+      where.id = { [Op.in]: filmIds };
+    }
 
     const { count, rows: films } = await Film.findAndCountAll({
       where,
       limit,
       offset,
       order: [['date_ajout', 'DESC']],
-      distinct: true, // ✅ important avec les includes
+      distinct: true,
       include: [
         {
           model: Genre,
@@ -35,7 +71,6 @@ export const getAllFilmsPublic = async (req, res) => {
         },
       ],
     });
-
     res.status(200).json({
       films,
       total: count,
